@@ -2,10 +2,45 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"sync"
 )
 
 func main() {
+	paymentSystem := initData()
+	ch := make(chan Transaction, len(paymentSystem.Transactions))
+	var wg sync.WaitGroup
+
+	addTransactionsToChannel(paymentSystem, ch)
+
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		go Worker(ch, &wg, paymentSystem)
+	}
+
+	close(ch)
+	wg.Wait()
+
+	fmt.Println(paymentSystem.Users["1"])
+	fmt.Println(paymentSystem.Users["2"])
+}
+
+func addTransactionsToChannel(ps *PaymentSystem, ch chan Transaction) {
+	for _, transaction := range ps.Transactions {
+		ch <- transaction
+	}
+}
+
+func Worker(ch chan Transaction, wg *sync.WaitGroup, ps *PaymentSystem) {
+	defer wg.Done()
+
+	for transaction := range ch {
+		if err := ps.ProcessingTransactions(transaction); err != nil {
+			println(err)
+		}
+	}
+}
+
+func initData() *PaymentSystem {
 	paymentSystem := NewPaymentSystem()
 
 	user1 := NewUser("1", "Tiger", 1000)
@@ -20,9 +55,5 @@ func main() {
 	paymentSystem.AddTransaction(*transaction1)
 	paymentSystem.AddTransaction(*transaction2)
 
-	go paymentSystem.ProcessingTransactions()
-
-	time.Sleep(time.Second)
-	fmt.Println(paymentSystem.Users["1"])
-	fmt.Println(paymentSystem.Users["2"])
+	return paymentSystem
 }

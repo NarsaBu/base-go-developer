@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -35,26 +36,24 @@ func (ps *PaymentSystem) AddTransaction(transaction Transaction) {
 	fmt.Printf("Added transaction to the payment system\n")
 }
 
-func (ps *PaymentSystem) ProcessingTransactions() {
+func (ps *PaymentSystem) ProcessingTransactions(transaction Transaction) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	for _, transaction := range ps.Transactions {
-		fromUser, fromUseOk := ps.Users[transaction.FromID]
-		toUser, toUseOk := ps.Users[transaction.ToID]
+	fromUser, fromUseOk := ps.Users[transaction.FromID]
+	toUser, toUseOk := ps.Users[transaction.ToID]
 
-		if !fromUseOk || !toUseOk {
-			println("Error processing transaction: FromUser or/and ToUser does not exist")
-			continue
-		}
-
-		if err := fromUser.Withdraw(transaction.Amount); err == nil {
-			toUser.Deposit(transaction.Amount)
-			fmt.Println("Successfully applied transaction: ", transaction)
-		} else {
-			println("Error processing transaction: ", err)
-		}
+	if !fromUseOk || !toUseOk {
+		return errors.New("error processing transaction: FromUser or/and ToUser does not exist")
 	}
 
-	ps.Transactions = ps.Transactions[:0]
+	err := fromUser.Withdraw(transaction.Amount)
+
+	if err != nil {
+		return err
+	}
+
+	toUser.Deposit(transaction.Amount)
+	fmt.Println("Successfully applied transaction: ", transaction)
+	return nil
 }
