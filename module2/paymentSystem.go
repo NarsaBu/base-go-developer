@@ -3,10 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"sync"
 )
-
-var mu sync.Mutex
 
 type PaymentSystem struct {
 	Users        map[string]*User
@@ -37,9 +34,6 @@ func (ps *PaymentSystem) AddTransaction(transaction Transaction) {
 }
 
 func (ps *PaymentSystem) ProcessingTransactions(transaction Transaction) error {
-	mu.Lock()
-	defer mu.Unlock()
-
 	fromUser, fromUseOk := ps.Users[transaction.FromID]
 	toUser, toUseOk := ps.Users[transaction.ToID]
 
