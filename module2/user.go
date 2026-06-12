@@ -1,10 +1,8 @@
 package main
 
 import (
-	"sync"
+	"errors"
 )
-
-var mu sync.Mutex
 
 type User struct {
 	ID      string
@@ -21,20 +19,15 @@ func NewUser(id, name string, balance float64) *User {
 }
 
 func (u *User) Deposit(value float64) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	u.Balance += value
 }
 
-func (u *User) Withdraw(value float64) {
-	mu.Lock()
-	defer mu.Unlock()
-
+func (u *User) Withdraw(value float64) error {
 	if value > u.Balance {
 		println("Can`t perform withdraw: withdraw value is larger then balance")
-		return
+		return errors.New("balance is lower then withdraw value")
 	}
 
 	u.Balance -= value
+	return nil
 }
