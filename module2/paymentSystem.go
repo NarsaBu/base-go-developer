@@ -18,17 +18,11 @@ func NewPaymentSystem() *PaymentSystem {
 }
 
 func (ps *PaymentSystem) AddUser(user User) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	ps.Users[user.ID] = &user
 	fmt.Printf("Added user %s to the payment system\n", user.ID)
 }
 
 func (ps *PaymentSystem) AddTransaction(transaction Transaction) {
-	mu.Lock()
-	defer mu.Unlock()
-
 	ps.Transactions = append(ps.Transactions, transaction)
 	fmt.Printf("Added transaction to the payment system\n")
 }
