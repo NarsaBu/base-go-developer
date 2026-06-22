@@ -185,8 +185,8 @@ func TestRedirectByAlias_Success(t *testing.T) {
 	mockRepo.On("FindUrlStringByAlias", "ex").Return("https://example.com", nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/urls/redirect/ex", nil)
-	authUser := os.Getenv("BASIC_AUTH_USER")
-	authPass := os.Getenv("BASIC_AUTH_PASS")
+	authUser := os.Getenv("AUTH_USERNAME")
+	authPass := os.Getenv("AUTH_PASSWORD")
 	req.SetBasicAuth(authUser, authPass)
 
 	rr := httptest.NewRecorder()
