@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: app-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: url-shortener
+    restart: always
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      PORT: ${PORT}
+      TIMEOUT: ${TIMEOUT}
+      IDLE_TIMEOUT: ${IDLE_TIMEOUT}
+
+      AUTH_USERNAME: ${AUTH_USERNAME}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+
+      DB_SERVER: ${DB_SERVER}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
