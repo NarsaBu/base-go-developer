@@ -2,14 +2,9 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"go-pet-shop/internal/apperr"
 	"go-pet-shop/internal/models"
-)
-
-var (
-	ErrNotFound     = errors.New("not found")
-	ErrInvalidInput = errors.New("invalid input")
 )
 
 // ❗ Памятка - Контекст не должен создаваться через context.Background() внутри методов.
@@ -71,7 +66,7 @@ func (s *Storage) DeleteProduct(ctx context.Context, id int) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("%s: %w: id=%d", fn, ErrNotFound, id)
+		return fmt.Errorf("%s: %w: id=%d", fn, apperr.ErrNotFound, id)
 	}
 
 	return nil
@@ -89,7 +84,7 @@ func (s *Storage) UpdateProduct(ctx context.Context, p models.Product) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return fmt.Errorf("%s: %w: id=%d", fn, ErrNotFound, p.ID)
+		return fmt.Errorf("%s: %w: id=%d", fn, apperr.ErrNotFound, p.ID)
 	}
 
 	return nil

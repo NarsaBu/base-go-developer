@@ -2,19 +2,19 @@ package product
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"go-pet-shop/internal/apperr"
 	"go-pet-shop/internal/models"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 )
 
-//go:generate go run github.com/vektra/mockery/v2 --name=Products
 type Products interface {
 	GetAllProducts(ctx context.Context) ([]models.Product, error)
 	CreateProduct(ctx context.Context, product models.Product) (int, error)
@@ -104,11 +104,11 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	if product.Stock < 0 {
 		log.Error("product stock is negative", slog.Int("stock", product.Stock))
+		w.WriteHeader(http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{
 			"error":   "Bad request",
 			"message": "Product stock cannot be negative",
 		})
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -174,10 +174,7 @@ func (h *Handler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 
 	// Удаляем продукт
 	if err := h.storage.DeleteProduct(r.Context(), id); err != nil {
-		// Проверяем, является ли ошибка "не найдено" с помощью strings.Contains
-		if strings.Contains(strings.ToLower(err.Error()), "not found") ||
-			strings.Contains(strings.ToLower(err.Error()), "no rows") ||
-			strings.Contains(strings.ToLower(err.Error()), "rows affected: 0") {
+		if errors.Is(err, apperr.ErrNotFound) {
 			log.Warn("product not found for deletion", slog.Int("id", id))
 			w.WriteHeader(http.StatusNotFound)
 			render.JSON(w, r, map[string]interface{}{
@@ -291,10 +288,7 @@ func (h *Handler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 	// Обновляем продукт
 	if err := h.storage.UpdateProduct(r.Context(), product); err != nil {
-		// Проверяем, является ли ошибка "не найдено" с помощью strings.Contains
-		if strings.Contains(strings.ToLower(err.Error()), "not found") ||
-			strings.Contains(strings.ToLower(err.Error()), "no rows") ||
-			strings.Contains(strings.ToLower(err.Error()), "rows affected: 0") {
+		if errors.Is(err, apperr.ErrNotFound) {
 			log.Warn("product not found for update", slog.Int("id", id))
 			w.WriteHeader(http.StatusNotFound)
 			render.JSON(w, r, map[string]interface{}{
