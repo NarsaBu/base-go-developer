@@ -36,7 +36,6 @@ func (s *Storage) GetUserOrderHistory(ctx context.Context, email string) ([]mode
 	defer rows.Close()
 
 	ordersMap := make(map[int]*models.OrderDetail)
-
 	var orderIDs []int
 
 	for rows.Next() {
@@ -88,13 +87,6 @@ func (s *Storage) GetUserOrderHistory(ctx context.Context, email string) ([]mode
 			Quantity:    quantity,
 			Price:       price,
 		})
-
-		ordersMap[orderID].Items = append(ordersMap[orderID].Items, models.OrderItemDetail{
-			ProductID:   productID,
-			ProductName: productName,
-			Quantity:    quantity,
-			Price:       price,
-		})
 	}
 
 	if err = rows.Err(); err != nil {
@@ -121,6 +113,7 @@ func (s *Storage) GetPopularProducts(ctx context.Context) ([]models.PopularProdu
 		GROUP BY p.id, p.name
 		ORDER BY total_sold DESC
 	`
+
 	rows, err := s.db.Query(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while querying popular products: %w", err)
@@ -130,18 +123,17 @@ func (s *Storage) GetPopularProducts(ctx context.Context) ([]models.PopularProdu
 	var products []models.PopularProduct
 
 	for rows.Next() {
-		var product models.PopularProduct
+		var p models.PopularProduct
 		err := rows.Scan(
-			&product.ProductID,
-			&product.ProductName,
-			&product.TotalSold,
-			&product.TotalRevenue,
+			&p.ProductID,
+			&p.ProductName,
+			&p.TotalSold,
+			&p.TotalRevenue,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error while scanning popular product: %w", err)
 		}
-
-		products = append(products, product)
+		products = append(products, p)
 	}
 
 	if err = rows.Err(); err != nil {

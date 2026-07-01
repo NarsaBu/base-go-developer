@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go-pet-shop/internal/apperr"
 	"go-pet-shop/internal/models"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (s *Storage) CreateUser(ctx context.Context, user models.User) (int, error) {
@@ -16,8 +18,9 @@ func (s *Storage) CreateUser(ctx context.Context, user models.User) (int, error)
 	err := s.db.QueryRow(ctx, `INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id`, user.Name, user.Email).Scan(&id)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return 0, apperr.ErrAliasAlreadyExists
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return 0, fmt.Errorf("%s: %w", fn, apperr.ErrEmailAlreadyExists)
 		}
 		return 0, fmt.Errorf("%s: %w", fn, err)
 	}
@@ -32,6 +35,9 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (models.User
 
 	err := s.db.QueryRow(ctx, `SELECT id, name, email FROM users WHERE email = $1`, email).Scan(&user.ID, &user.Name, &user.Email)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user, fmt.Errorf("%s: %w", fn, apperr.ErrNotFound)
+		}
 		return user, fmt.Errorf("%s: %w", fn, err)
 	}
 

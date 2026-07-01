@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go-pet-shop/internal/apperr"
 	"go-pet-shop/internal/models"
 	"time"
 
@@ -58,7 +59,7 @@ func (s *Storage) getUserIDByEmail(ctx context.Context, tx pgx.Tx, email string)
 	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, fmt.Errorf("user with email %s not found", email)
+			return 0, fmt.Errorf("%w: %s", apperr.ErrUserNotFound, email)
 		}
 		return 0, fmt.Errorf("error while getting user: %w", err)
 	}
@@ -78,7 +79,7 @@ func (s *Storage) decrementStocks(ctx context.Context, tx pgx.Tx, items []models
 
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
-				return 0, fmt.Errorf("insufficient stock for product ID %d", item.ProductID)
+				return 0, fmt.Errorf("%w: product ID %d", apperr.ErrInsufficientStock, item.ProductID)
 			}
 			return 0, fmt.Errorf("error while updating stock for product %d: %w", item.ProductID, err)
 		}
@@ -112,7 +113,6 @@ func (s *Storage) insertOrderItems(ctx context.Context, tx pgx.Tx, orderID int, 
 			return fmt.Errorf("error while inserting order item for product %d: %w", item.ProductID, err)
 		}
 	}
-
 	return nil
 }
 
