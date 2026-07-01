@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"go-pet-shop/internal/apperr"
 	"go-pet-shop/internal/models"
 	"log/slog"
 	"net/http"
@@ -72,6 +75,16 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := h.storage.CreateUser(r.Context(), user)
 	if err != nil {
+		if errors.Is(err, apperr.ErrEmailAlreadyExists) {
+			log.Warn("attempt to create user with existing email", slog.String("email", user.Email))
+			w.WriteHeader(http.StatusConflict)
+			render.JSON(w, r, map[string]string{
+				"error":   "Conflict",
+				"message": "User with this email already exists",
+			})
+			return
+		}
+
 		log.Error("failed to create user", slog.Any("error", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{
@@ -107,7 +120,7 @@ func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 	email := chi.URLParam(r, "email")
 	if email == "" {
-		log.Error("empty id in URL")
+		log.Error("empty email in URL")
 		w.WriteHeader(http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{
 			"error":   "Bad request",
@@ -119,6 +132,16 @@ func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	user, err := h.storage.GetUserByEmail(r.Context(), email)
 
 	if err != nil {
+		if errors.Is(err, apperr.ErrNotFound) {
+			log.Warn("user not found", slog.String("email", email))
+			w.WriteHeader(http.StatusNotFound)
+			render.JSON(w, r, map[string]interface{}{
+				"error":   "Not found",
+				"message": fmt.Sprintf("User with email %s does not exist", email),
+			})
+			return
+		}
+
 		log.Error("failed to get user by email", slog.Any("error", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{

@@ -358,11 +358,22 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 	product, err := h.storage.GetProductByID(r.Context(), id)
 
 	if err != nil {
+		if errors.Is(err, apperr.ErrNotFound) {
+			log.Warn("product not found", slog.Int("id", id))
+			w.WriteHeader(http.StatusNotFound)
+			render.JSON(w, r, map[string]interface{}{
+				"error":   "Not found",
+				"message": fmt.Sprintf("Product with ID %d does not exist", id),
+				"id":      id,
+			})
+			return
+		}
+
 		log.Error("failed to get product by id", slog.Any("error", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{
 			"error":   "Internal server error",
-			"message": "Failed to retrieve products",
+			"message": "Failed to retrieve product",
 		})
 		return
 	}
