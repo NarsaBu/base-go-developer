@@ -66,6 +66,10 @@ func main() {
 	checkoutHandler := handlers.NewCheckoutHandler(log, storage)
 	router.Post("/checkout", checkoutHandler.PlaceOrder)
 
+	statisticHandler := handlers.NewStatisticHandler(log, storage)
+	router.Get("/users/history", statisticHandler.GetUserOrderHistory)
+	router.Get("/products/popular", statisticHandler.GetPopularProducts)
+
 	// Settings and started server
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
