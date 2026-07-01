@@ -24,7 +24,7 @@ type Products interface {
 
 type ProductHandler struct {
 	log     *slog.Logger
-	service Products // Раньше было storage
+	service Products
 }
 
 func NewProductHandler(log *slog.Logger, service Products) *ProductHandler {
@@ -67,7 +67,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr) // Конвертация HTTP-параметра остается в хендлере
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		render.JSON(w, r, map[string]string{"error": "Bad request", "message": "Product ID must be a number"})
