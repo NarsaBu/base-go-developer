@@ -16,6 +16,9 @@ func (s *Storage) CreateUser(ctx context.Context, user models.User) (int, error)
 	err := s.db.QueryRow(ctx, `INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id`, user.Name, user.Email).Scan(&id)
 
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return 0, apperr.ErrAliasAlreadyExists
+		}
 		return 0, fmt.Errorf("%s: %w", fn, err)
 	}
 
@@ -29,9 +32,6 @@ func (s *Storage) GetUserByEmail(ctx context.Context, email string) (models.User
 
 	err := s.db.QueryRow(ctx, `SELECT id, name, email FROM users WHERE email = $1`, email).Scan(&user.ID, &user.Name, &user.Email)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return user, apperr.ErrAliasAlreadyExists
-		}
 		return user, fmt.Errorf("%s: %w", fn, err)
 	}
 

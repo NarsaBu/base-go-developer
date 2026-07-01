@@ -76,7 +76,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{
 			"error":   "Internal server error",
-			"message": "Failed to create product",
+			"message": "Failed to create user",
 		})
 		return
 	}
@@ -89,7 +89,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user.ID = userID
 	render.JSON(w, r, map[string]interface{}{
-		"status": "Product created successfully",
+		"status": "User created successfully",
 		"id":     userID,
 		"user":   user,
 	})
@@ -123,7 +123,7 @@ func (h *UserHandler) GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		render.JSON(w, r, map[string]string{
 			"error":   "Internal server error",
-			"message": "Failed to retrieve products",
+			"message": "Failed to retrieve user",
 		})
 		return
 	}

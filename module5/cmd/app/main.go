@@ -63,6 +63,13 @@ func main() {
 	router.Get("/users/{email}", userHandler.GetUserByEmail)
 	router.Get("/users", userHandler.GetAllUsers)
 
+	orderHandler := handlers.NewOrderHandler(log, storage)
+	router.Post("/orders", orderHandler.CreateOrder)
+	router.Post("/orders/{id}/items", orderHandler.AddOrderItem)
+	router.Get("/orders/{id}", orderHandler.GetOrderByID)
+	router.Get("/users/orders", orderHandler.GetOrdersByUserEmail)
+	router.Get("/orders/{id}/items", orderHandler.GetOrderItemsByOrderID)
+
 	// Settings and started server
 	srv := &http.Server{
 		Addr:         cfg.HTTPServer.Address,
